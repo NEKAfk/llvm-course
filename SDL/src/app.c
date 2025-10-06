@@ -1,6 +1,6 @@
 #include "sim.h"
 
-#define SCALE_FACTOR 4
+#define SCALE_FACTOR 8
 #define HEIGHT (SIM_Y_SIZE / SCALE_FACTOR)
 #define WIDTH (SIM_X_SIZE / SCALE_FACTOR)
 #define SPAWN_CHANCE 10

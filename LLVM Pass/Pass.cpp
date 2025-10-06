@@ -28,7 +28,7 @@ struct MyModPass : public llvm::PassInfoMixin<MyModPass> {
 
     std::vector<Instruction *> operands;
     std::set<PHINode *> set;
-    std::map<std::string, Value *> opNames;
+    std::map<const char*, Value *> opNames;
 
     for (auto &F : M) {
       if (F.isDeclaration()) {
@@ -54,16 +54,15 @@ struct MyModPass : public llvm::PassInfoMixin<MyModPass> {
 
           builder.SetInsertPoint(&I);
           
-          std::string IOpcodeName(I.getOpcodeName());
-          if (!opNames.contains(IOpcodeName)) {
-            opNames[IOpcodeName] = builder.CreateGlobalString(I.getOpcodeName());
+          if (!opNames.contains(I.getOpcodeName())) {
+            opNames[I.getOpcodeName()] = builder.CreateGlobalString(I.getOpcodeName());
           }
           for (auto *In : std::views::reverse(operands)) {
             std::string InOpcodeName(In->getOpcodeName());
-            if (!opNames.contains(InOpcodeName)) {
-              opNames[InOpcodeName] = builder.CreateGlobalString(In->getOpcodeName());
+            if (!opNames.contains(In->getOpcodeName())) {
+              opNames[In->getOpcodeName()] = builder.CreateGlobalString(In->getOpcodeName());
             }
-            builder.CreateCall(TraceLogFunc, {opNames[IOpcodeName], opNames[InOpcodeName]});
+            builder.CreateCall(TraceLogFunc, {opNames[I.getOpcodeName()], opNames[In->getOpcodeName()]});
           }
         }
       }
