@@ -1,5 +1,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 
@@ -16,7 +17,7 @@ struct MyModPass : public llvm::PassInfoMixin<MyModPass> {
     outs() << "[Module] " << M.getName() << '\n';
 
     LLVMContext &Ctx = M.getContext();
-    IRBuilder<> builder(Ctx);
+    IRBuilder builder(Ctx);
 
     Type *int8PtrTy = Type::getInt8Ty(Ctx)->getPointerTo();
     Type *voidType = Type::getVoidTy(Ctx);
@@ -53,7 +54,7 @@ struct MyModPass : public llvm::PassInfoMixin<MyModPass> {
           }
 
           builder.SetInsertPoint(&I);
-          
+
           if (!opNames.contains(I.getOpcodeName())) {
             opNames[I.getOpcodeName()] = builder.CreateGlobalString(I.getOpcodeName());
           }
