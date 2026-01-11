@@ -1,0 +1,72 @@
+let app() -> void = {
+    num scale = 8;
+    num width = /(X_SIZE, scale);
+    num height = /(Y_SIZE, scale);
+
+    arr[2, 2244] generations;
+    num t = 0;
+
+    for
+    [row, 1, +(height, 1)]
+    [col, 1, +(width, 1)]
+    {
+        generations[t, +(col, *(row, +(width, 2)))] = ?(==(0, %(rand(), 10)), 
+                                               ?(==(0, %(rand(), 50)), 
+                                                 16711680, 
+                                                 65280), 
+                                               0);
+    }
+
+    num neighbour_cnt = 0;
+    num has_red_neighbour = 0;
+    num idx = 0;
+    num argb = 0;
+
+    while
+    [==(1, 1)]
+    {
+        for
+        [x, 0, width]
+        [y, 0, height]
+        {
+            argb = generations[t, +(+(x, 1), *(+(y, 1), +(width, 2)))];
+            for
+            [i, 0, scale]
+            [j, 0, scale]
+            {
+                putPixel(+(*(x, scale), i), +(*(y, scale), j), 
+                                argb);
+            }
+        }
+        flush();
+
+        for
+        [y, 1, +(height, 1)]
+        [x, 1, +(width, 1)]
+        {
+            neighbour_cnt = 0;
+            has_red_neighbour = 0;
+            for
+            [i, -1, 2]
+            [j, -1, 2]
+            {
+                if
+                [||(!=(i, 0), !=(j, 0))]
+                {
+                    neighbour_cnt = +(neighbour_cnt, ?(!=(generations[t, +(*(+(y, i), +(width, 2)), +(x, j))], 0), 1, 0));
+                    has_red_neighbour = |(has_red_neighbour, ?(==(16711680, generations[t, +(*(+(y, i), +(width, 2)), +(x, j))]), 1, 0));
+                }
+            }
+
+            idx = +(*(y, +(width, 2)), x);
+            generations[&(+(t, 1), 1), idx] = ?(||(==(neighbour_cnt, 3), &&(!=(generations[t, idx], 0), ==(neighbour_cnt, 2))), 
+                                                ?(!=(has_red_neighbour, 0), 
+                                                  16711680, 
+                                                  65280), 
+                                                0);
+        }
+
+        t = &(+(t, 1), 1);
+    }
+    return;
+}
