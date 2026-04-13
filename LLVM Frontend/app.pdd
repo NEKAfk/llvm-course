@@ -10,8 +10,8 @@ let app() -> void = {
     [row, 1, +(height, 1)]
     [col, 1, +(width, 1)]
     {
-        generations[t, +(col, *(row, +(width, 2)))] = ?(==(0, %(rand(), 10)), 
-                                               ?(==(0, %(rand(), 50)), 
+        generations[t, +(col, *(row, +(width, 2)))] = ?(==(0, randMod(10)), 
+                                               ?(==(0, randMod(50)), 
                                                  16711680, 
                                                  65280), 
                                                0);

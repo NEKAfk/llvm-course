@@ -1,4 +1,4 @@
-#include "../SDL/include/sim.h"
+#include "sim.h"
 #include "generated/GrammarLexer.h"
 #include "generated/GrammarParser.h"
 #include "generated/GrammarVisitor.h"
@@ -58,18 +58,19 @@ struct TreeLLVMWalker : public GrammarVisitor {
     FunctionType *flushType = FunctionType::get(voidType, false);
     module->getOrInsertFunction("flush", flushType);
 
-    // declare i32 @rand()
-    FunctionType *randType = FunctionType::get(int32Type, false);
-    module->getOrInsertFunction("rand", randType);
+    // declare i32 @randMod(i32)
+    ArrayRef<Type *> randModParamTypes = {int32Type};
+    FunctionType *randModType = FunctionType::get(int32Type, randModParamTypes, false);
+    module->getOrInsertFunction("randMod", randModType);
   }
 
   void regGraphicFuncsIntr() {
-    // declare void @llvm.sim.putpixel(i32, i32, i32)
+    // declare void @llvm.icd10b69.putpixel(i32, i32, i32)
     ArrayRef<Type *> putPixelParamTypes = {int32Type, int32Type, int32Type};
     FunctionType *putPixelIntrType =
         FunctionType::get(voidType, putPixelParamTypes, false);
     FunctionCallee putPixelIntr =
-        module->getOrInsertFunction("llvm.sim.putpixel", putPixelIntrType);
+        module->getOrInsertFunction("llvm.icd10b69.putpixel", putPixelIntrType);
 
     // define void @putPixel(i32 %0, i32 %1, i32 %2) {
     FunctionType *putPixelType =
@@ -79,15 +80,16 @@ struct TreeLLVMWalker : public GrammarVisitor {
     // entry:
     builder->SetInsertPoint(
         BasicBlock::Create(*ctxLLVM, "entry", putPixelFunc));
-    // call void @llvm.sim.putpixel(i32 %0, i32 %1, i32 %2)
+    // call void @llvm.icd10b69.putpixel(i32 %0, i32 %1, i32 %2)
     builder->CreateCall(putPixelIntr,
                         {putPixelFunc->getArg(0), putPixelFunc->getArg(1),
                          putPixelFunc->getArg(2)});
+    builder->CreateRetVoid();
 
-    // declare void @llvm.sim.flush()
+    // declare void @llvm.icd10b69.flush()
     FunctionType *flushIntrType = FunctionType::get(voidType, false);
     FunctionCallee flushIntr =
-        module->getOrInsertFunction("llvm.sim.flush", flushIntrType);
+        module->getOrInsertFunction("llvm.icd10b69.flush", flushIntrType);
 
     // define void @flush() {
     FunctionType *flushType = FunctionType::get(voidType, false);
@@ -96,23 +98,25 @@ struct TreeLLVMWalker : public GrammarVisitor {
     // entry:
     builder->SetInsertPoint(
         BasicBlock::Create(*ctxLLVM, "entry", flushFunc));
-    // call void @llvm.sim.flush()
+    // call void @llvm.icd10b69.flush()
     builder->CreateCall(flushIntr);
+    builder->CreateRetVoid();
 
-    // declare i32 @llvm.sim.rand()
-    FunctionType *randIntrType = FunctionType::get(int32Type, false);
-    FunctionCallee randIntr =
-        module->getOrInsertFunction("llvm.sim.rand", randIntrType);
+    // declare i32 @llvm.icd10b69.randMod(i32)
+    ArrayRef<Type *> randModParamTypes = {int32Type};
+    FunctionType *randModIntrType = FunctionType::get(int32Type, randModParamTypes, false);
+    FunctionCallee randModIntr =
+        module->getOrInsertFunction("llvm.icd10b69.randMod", randModIntrType);
 
-    // define i32 @rand() {
-    FunctionType *randType = FunctionType::get(int32Type, false);
-    Function *randFunc = Function::Create(
-        flushType, Function::ExternalLinkage, "rand", module);
+    // define i32 @randMod(i32) {
+    FunctionType *randModType = FunctionType::get(int32Type, randModParamTypes, false);
+    Function *randModFunc = Function::Create(
+        randModType, Function::ExternalLinkage, "randMod", module);
 
     // entry:
-    builder->SetInsertPoint(BasicBlock::Create(*ctxLLVM, "entry", randFunc));
-    // call void @llvm.sim.rand()
-    Value *ret = builder->CreateCall(randIntr);
+    builder->SetInsertPoint(BasicBlock::Create(*ctxLLVM, "entry", randModFunc));
+    // call void @llvm.icd10b69.randMod(i32 %0)
+    Value *ret = builder->CreateCall(randModIntr, {randModFunc->getArg(0)});
     // ret i32
     builder->CreateRet(ret);
   }
@@ -460,13 +464,13 @@ int main(int argc, const char *argv[]) {
         EngineBuilder(std::unique_ptr<Module>(module)).create();
     ee->InstallLazyFunctionCreator([](const std::string &fnName) -> void * {
       if (fnName == "putPixel") {
-        return reinterpret_cast<void *>(simPutPixel);
+        return reinterpret_cast<void *>(putPixel);
       }
       if (fnName == "flush") {
-        return reinterpret_cast<void *>(simFlush);
+        return reinterpret_cast<void *>(flush);
       }
-      if (fnName == "rand") {
-        return reinterpret_cast<void *>(simRand);
+      if (fnName == "randMod") {
+        return reinterpret_cast<void *>(randMod);
       }
       if (fnName == "memset") {
         return reinterpret_cast<void *>(memset);
